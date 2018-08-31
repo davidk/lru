@@ -137,7 +137,7 @@ func (c *Cache) removeElement(e *list.Element) {
 
 // Len returns the number of items in the cache.
 func (c *Cache) Len() int {
-	defer c.Runlock()
+	defer c.RUnlock()
 	c.RLock()
 
 	if c.cache == nil {
