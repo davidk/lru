@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 // Package lru implements an LRU cache.
+
 package lru
 
 import (
@@ -22,6 +23,7 @@ import (
 	"sync"
 )
 
+// Modification(davidk): This LRU cache uses sync to allow safe concurrent access 
 // Cache is an LRU cache. It is not safe for concurrent access.
 type Cache struct {
 	// MaxEntries is the maximum number of cache entries before
