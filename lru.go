@@ -59,6 +59,7 @@ func New(maxEntries int) *Cache {
 
 // Add adds a value to the cache.
 func (c *Cache) Add(key Key, value interface{}) {
+	defer c.Unlock()
 	c.Lock()
 
 	if c.cache == nil {
@@ -73,10 +74,8 @@ func (c *Cache) Add(key Key, value interface{}) {
 	ele := c.ll.PushFront(&entry{key, value})
 	c.cache[key] = ele
 	if c.MaxEntries != 0 && c.ll.Len() > c.MaxEntries {
-		c.RemoveOldest()
+		c.removeOldest()
 	}
-
-	c.Unlock()
 }
 
 // Get looks up a key's value from the cache.
@@ -96,6 +95,7 @@ func (c *Cache) Get(key Key) (value interface{}, ok bool) {
 
 // Remove removes the provided key from the cache.
 func (c *Cache) Remove(key Key) {
+	defer c.Unlock()
 	c.Lock()
 
 	if c.cache == nil {
@@ -104,14 +104,10 @@ func (c *Cache) Remove(key Key) {
 	if ele, hit := c.cache[key]; hit {
 		c.removeElement(ele)
 	}
-
-	c.Unlock()
 }
 
-// RemoveOldest removes the oldest item from the cache.
-func (c *Cache) RemoveOldest() {
-	c.Lock()
-
+// removeOldest removes the oldest item from the cache.
+func (c *Cache) removeOldest() {
 	if c.cache == nil {
 		return
 	}
@@ -119,21 +115,15 @@ func (c *Cache) RemoveOldest() {
 	if ele != nil {
 		c.removeElement(ele)
 	}
-
-	c.Unlock()
 }
 
 func (c *Cache) removeElement(e *list.Element) {
-	c.Lock()
-
 	c.ll.Remove(e)
 	kv := e.Value.(*entry)
 	delete(c.cache, kv.key)
 	if c.OnEvicted != nil {
 		c.OnEvicted(kv.key, kv.value)
 	}
-
-	c.Unlock()
 }
 
 // Len returns the number of items in the cache.
@@ -149,7 +139,9 @@ func (c *Cache) Len() int {
 
 // Clear purges all stored items from the cache.
 func (c *Cache) Clear() {
+	defer c.Unlock()
 	c.Lock()
+
 	if c.OnEvicted != nil {
 		for _, e := range c.cache {
 			kv := e.Value.(*entry)
@@ -158,5 +150,4 @@ func (c *Cache) Clear() {
 	}
 	c.ll = nil
 	c.cache = nil
-	c.Unlock()
 }
